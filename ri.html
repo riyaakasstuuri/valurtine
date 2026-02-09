@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Will you be mine? ❤️</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #fff7ed, #fce7f3);
+    }
+    .card {
+      background: linear-gradient(145deg, #ffe4f0, #ffc1d8);
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    }
+    .yes-btn {
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+/* Full-screen smooth expanding red circle transition */
+/* Full-screen smooth expanding red circle transition */
+.ripple {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(239, 68, 68, 0.95) 0%,
+    rgba(220, 38, 38, 0.75) 40%,
+    rgba(185, 28, 28, 0.4) 70%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  transform: scale(0);
+  opacity: 1;
+  pointer-events: none;
+  z-index: 9999;
+  animation: fullScreenExpand 2.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes fullScreenExpand {
+  0% {
+    transform: scale(0);
+    opacity: 0.95;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Photos slowly falling down */
+.photo-fall {
+  position: absolute;
+  width: 280px;
+  max-height: 380px;
+  object-fit: cover;
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+  opacity: 0;
+  animation: fallDown 12s forwards;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes fallDown {
+  0% {
+    opacity: 0;
+    top: -20%;
+  }
+  10% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+    top: 60%;
+  }
+  100% {
+    opacity: 0;
+    top: 120%;
+  }
+}
+
+/* Stagger timing for 6 photos */
+.photo-fall:nth-child(1) { animation-delay: 0.5s; }
+.photo-fall:nth-child(2) { animation-delay: 2.2s; }
+.photo-fall:nth-child(3) { animation-delay: 3.9s; }
+.photo-fall:nth-child(4) { animation-delay: 5.6s; }
+.photo-fall:nth-child(5) { animation-delay: 7.3s; }
+.photo-fall:nth-child(6) { animation-delay: 9s; }
+
+#finalTransition {
+  position: fixed;
+  inset: 0;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+#redCircle {
+  position: absolute;
+  background: #ef4444;
+  border-radius: 9999px;
+  width: 10px;
+  height: 10px;
+  transition: all 1.5s ease-in-out;
+}
+/* Falling petals background */
+.petal {
+  position: absolute;
+  top: -10%;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle at 30% 30%, #ffe4e6, #fb7185);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(45deg);
+  opacity: 0.8;
+  filter: blur(0.2px);
+  animation: fallPetal linear infinite;
+}
+
+@keyframes fallPetal {
+  0% {
+    transform: translateX(0) translateY(0) rotate(45deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(60px) translateY(120vh) rotate(405deg);
+    opacity: 0;
+  }
+}
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+  <div id="card" class="card rounded-3xl p-10 max-w-xs w-full text-center relative overflow-hidden">
+    
+    <!-- Cute Bear -->
+    <img id="bear" 
+         src="haha.png" 
+         alt="Cute Bear" 
+         class="mx-auto w-40 h-40 object-contain drop-shadow-lg">
+
+    <!-- Main Text -->
+    <h1 id="question" class="text-4xl font-bold text-rose-800 mt-6 leading-tight">
+      Will you be my valentine? 🥺
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="text-rose-700 mt-3 text-lg">
+      I AM WAITING FOR YOUR ANSWER :/
+    </p>
+
+    <!-- Buttons -->
+    <div class="flex justify-center gap-8 mt-10">
+      <button id="yesBtn"
+        class="yes-btn bg-red-500 hover:bg-red-600 text-white font-bold text-xl px-10 py-4 rounded-full shadow-lg active:scale-95">
+        YES
+      </button>
+      
+      <button id="noBtn"
+        class="bg-blue-500 hover:bg-blue-600 text-white font-bold text-xl px-10 py-4 rounded-full shadow-lg active:scale-95">
+        NO
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const question = document.getElementById('question');
+    let scale = 1;
+    let clicks = 0;
+
+    const messages = [
+      "Think again... 🥺",
+      "Are you sure? 💔",
+      "You will regret!!",
+      "One more chance? ❤️",
+      "Dudu please? 🥰",
+      "I can't live without you 💕",
+      "Say yes and make me the happiest! ✨",
+      "You know you want to... 😉",
+      "Final chance... don't regret it 🌹"
+    ];
+
+    // NO button logic
+    noBtn.addEventListener('click', () => {
+      clicks++;
+      scale += 0.28;
+      
+      yesBtn.style.transform = `scale(${scale})`;
+      
+      // Random new message
+      let newText = messages[Math.floor(Math.random() * messages.length)];
+      while (newText === question.textContent) {
+        newText = messages[Math.floor(Math.random() * messages.length)];
+      }
+      question.textContent = newText;
+    });
+
+    // YES button → Valentine page
+yesBtn.addEventListener('click', () => {
+  confetti({
+    particleCount: 200,
+    spread: 90,
+    origin: { y: 0.6 },
+    colors: ['#ff69b4', '#ff1493', '#ff0000']
+  });
+
+  document.getElementById('card').innerHTML = `
+  <div id="valentinePage" class="bg-pink-100 rounded-3xl p-8 text-center animate-fadeIn">
+    
+    <img 
+      src="STK-20251102-WA0014.webp" 
+      class="mx-auto w-40 h-40 mb-4 object-contain"
+      alt="Cute bears"
+    />
+
+    <h1 class="text-3xl font-bold text-rose-700">
+      Happy Valentine's Day! 💍
+    </h1>
+
+    <p class="text-rose-600 mt-2">
+      Every second with you is a celebration.  
+      You are the spark that makes my world so much brighter!
+    </p>
+
+    <button 
+      id="giftsBtn"
+      class="mt-6 bg-red-500 hover:bg-red-600 text-white font-bold px-8 py-3 rounded-full shadow-lg active:scale-95 transition">
+      SEE MY GIFTS 🎁
+    </button>
+  </div>
+`;
+});
+function showGiftsPage() {
+  document.body.innerHTML = `
+    <div class="min-h-screen w-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center p-6">
+
+      <div class="bg-pink-300/60 backdrop-blur-md rounded-3xl p-10 w-full max-w-5xl text-center shadow-2xl animate-fadeIn">
+
+        <h1 class="text-4xl md:text-5xl font-bold text-rose-800 mb-10">
+          Something for You 💝
+        </h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+
+          <button id="gift1" class="bg-pink-100 hover:scale-105 transition transform rounded-3xl p-8 shadow-xl">
+            <img src="cat-orange-cat.gif" class="mx-auto w-40 h-40 object-contain mb-4" />
+            <p class="text-2xl font-bold text-rose-700">Gift 1</p>
+          </button>
+
+          <button id="gift2" class="bg-pink-100 hover:scale-105 transition transform rounded-3xl p-8 shadow-xl">
+            <img src="cute-cats-memes.gif" class="mx-auto w-40 h-40 object-contain mb-4" />
+            <p class="text-2xl font-bold text-rose-700">Gift 2</p>
+          </button>
+
+          <button id="gift3" class="bg-pink-100 hover:scale-105 transition transform rounded-3xl p-8 shadow-xl">
+            <img src="sharkcat-memecoin.gif" class="mx-auto w-40 h-40 object-contain mb-4" />
+            <p class="text-2xl font-bold text-rose-700">Gift 3</p>
+          </button>
+
+        </div>
+
+        <div class="ripple-container relative inline-block">
+  <button
+    id="finallyBtn"
+    class="bg-red-500 hover:bg-red-600 text-white font-bold px-10 py-4 rounded-full shadow-lg active:scale-95 transition text-xl relative z-10">
+    FINALLY →
+  </button>
+</div>
+      </div>
+    </div>
+  `;
+}
+// Button click to show gifts
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.id === 'giftsBtn') {
+    showGiftsPage();
+  }
+});
+document.addEventListener('click', (e) => {
+  if (e.target?.id === 'gift1') startQuiz();
+  if (e.target?.id === 'gift2') showLetterPage();
+  if (e.target?.id === 'gift3') showGalleryPage();
+});
+
+
+let quizStep = 0;
+
+const quizData = [
+  {
+    question: "When did we first meet?",
+    options: ["5 August 2022", "20 June 2022", "17 June 2022"],
+    correct: "17 June 2022"
+  },
+  {
+    question: "Who is the boss of the relationship?",
+    options: ["You", "Me", "No one"],
+    correct: "You"
+  },
+  {
+    question: "Who loves you more?",
+    options: ["Me", "Mom", "Kaju"],
+    correct: "Kaju"
+  }
+];
+
+function startQuiz() {
+  quizStep = 0;
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const q = quizData[quizStep];
+
+  document.body.innerHTML = `
+    <div class="min-h-screen w-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center p-6">
+
+      <div class="bg-pink-300/60 backdrop-blur-md rounded-3xl p-10 w-full max-w-3xl text-center shadow-2xl animate-fadeIn">
+
+        <h1 class="text-4xl font-bold text-rose-800 mb-6">
+          Quiz for you 😘
+        </h1>
+
+        <p class="text-2xl text-rose-700 mb-8">
+          ${q.question}
+        </p>
+
+        <div class="grid grid-cols-1 gap-4">
+          ${q.options.map(opt => `
+            <button 
+              onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')"
+              class="bg-pink-100 hover:bg-pink-200 transition rounded-2xl p-4 text-xl font-bold text-rose-800 shadow-lg">
+              ${opt}
+            </button>
+          `).join("")}
+        </div>
+
+        <p id="quizError" class="text-red-600 font-semibold mt-4 hidden">
+          Oops 😅 try again!
+        </p>
+
+      </div>
+    </div>
+  `;
+}
+
+function checkAnswer(answer) {
+  const correct = quizData[quizStep].correct;
+  const errorEl = document.getElementById("quizError");
+
+  if (answer === correct) {
+    quizStep++;
+
+    if (quizStep < quizData.length) {
+      renderQuiz();
+    } else {
+      // Passed quiz
+      document.body.innerHTML = `
+        <div class="min-h-screen w-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center p-6">
+
+          <div class="bg-pink-300/60 backdrop-blur-md rounded-3xl p-10 w-full max-w-3xl text-center shadow-2xl animate-fadeIn">
+
+            <h1 class="text-5xl font-bold text-rose-800 mb-6">
+              You passed the test! 🥰💖
+            </h1>
+
+            <p class="text-2xl text-rose-700">
+              I knew you love me 😏💘
+            </p>
+
+            <p class="text-rose-600 mt-6">
+              Taking you back to your gifts...
+            </p>
+
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+  showGiftsPage();
+}, 5000);
+    }
+  } else {
+    errorEl.classList.remove("hidden");
+  }
+}
+function showLetterPage() {
+  document.body.innerHTML = `
+    <div class="min-h-screen w-full bg-[radial-gradient(circle_at_top,#ffe4e6,#fbcfe8,#f9a8d4)] flex items-center justify-center p-6">
+
+      <div class="relative bg-[#fffaf3] rounded-2xl shadow-2xl w-full max-w-3xl p-10 md:p-16 border border-rose-200">
+
+        <!-- Vintage paper effect -->
+        <div class="absolute inset-0 rounded-2xl bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-40 pointer-events-none"></div>
+
+        <h1 class="text-4xl md:text-5xl font-bold text-rose-700 mb-10 text-center tracking-wide">
+          A letter for you 😘
+        </h1>
+
+        <div class="relative text-rose-900 text-lg md:text-xl leading-relaxed font-[cursive] whitespace-pre-line">
+My Love,
+
+Happy Valentine’s Day to us – our 4th one together, wow, we’re really surviving each other 😌  
+Can’t take you out on a date and spend money on you right now, but here’s my smol effort to show you that I care, and I love you.
+
+Thank you for putting up with me, loving me, and still choosing me every day.  
+You’re my comfort, my favorite person, and honestly… my best decision.
+        </div>
+
+        <div class="text-center mt-10">
+          <button 
+            onclick="showGiftsPage()"
+            class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-10 py-4 rounded-full shadow-lg active:scale-95 transition">
+            ← Back to Gifts 🎁
+          </button>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+function showGalleryPage() {
+  document.body.innerHTML = `
+    <div class="min-h-screen w-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center p-6">
+
+      <div class="bg-pink-300/60 backdrop-blur-md rounded-3xl p-8 md:p-10 w-full max-w-6xl shadow-2xl animate-fadeIn">
+
+        <h1 class="text-4xl md:text-5xl font-bold text-rose-800 mb-8 text-center">
+          Look at USSS!! 😭
+        </h1>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+
+          ${[
+            { img: "sweet-hello.jpg", title: "Sweet Hello" },
+            { img: "true-smile.jpg", title: "True Smile" },
+            { img: "perfect-day.jpg", title: "Perfect Day" },
+            { img: "only-us.jpg", title: "Only Us" },
+            { img: "my-home.jpg", title: "My Home" },
+            { img: "forever-us.jpg", title: "Forever Us" }
+          ].map(p => `
+            <div class="bg-[#fffaf3] rounded-2xl p-4 shadow-xl transform transition duration-300 
+            rotate-1 hover:rotate-0 hover:scale-110">
+
+              <img 
+                src="${p.img}" 
+                class="w-full h-40 md:h-48 object-cover rounded-xl mb-3 shadow-md"
+              />
+
+              <p class="text-center font-[cursive] text-rose-700 text-lg">
+                ${p.title}
+              </p>
+
+            </div>
+          `).join("")}
+
+        </div>
+
+        <div class="text-center mt-10">
+          <button 
+            onclick="showGiftsPage()"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold px-10 py-4 rounded-full shadow-lg active:scale-95 transition">
+            ← Back to Gifts 🎁
+          </button>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.id === 'finallyBtn') {
+
+    // Pinch overlay
+    document.body.innerHTML = `
+      <div id="finalTransition">
+        <div id="redCircle"></div>
+      </div>
+    `;
+
+    const circle = document.getElementById("redCircle");
+
+    setTimeout(() => {
+      circle.style.width = "300vmax";
+      circle.style.height = "300vmax";
+      circle.style.opacity = "0.9";
+    }, 50);
+
+    // After pinch → show falling photos
+    setTimeout(() => {
+      document.body.innerHTML = `
+        <div class="min-h-screen w-full bg-gradient-to-br from-rose-50 via-pink-100 to-rose-200 relative overflow-hidden">
+
+          <div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+            <h1 class="text-5xl md:text-6xl font-bold text-red-500 drop-shadow-2xl animate-pulse tracking-wide text-center px-6">
+  You are my forever 💞
+</h1>
+          </div>
+
+          <img class="photo-fall" src="sweet-hello.jpg" alt="">
+          <img class="photo-fall" src="true-smile.jpg" alt="">
+          <img class="photo-fall" src="perfect-day.jpg" alt="">
+          <img class="photo-fall" src="only-us.jpg" alt="">
+          <img class="photo-fall" src="my-home.jpg" alt="">
+          <img class="photo-fall" src="forever-us.jpg" alt="">
+        </div>
+      `;
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 13000);
+
+    }, 1700); // 👈 same timing as your old pinch
+  }
+});
+function startPetals() {
+  const container = document.getElementById("petals-container");
+  if (!container) return;
+
+  setInterval(() => {
+    const petal = document.createElement("div");
+    petal.className = "petal";
+    petal.style.left = Math.random() * 100 + "vw";
+    petal.style.animationDuration = 8 + Math.random() * 6 + "s";
+    petal.style.opacity = 0.6 + Math.random() * 0.4;
+    petal.style.transform = `scale(${0.6 + Math.random() * 0.8}) rotate(45deg)`;
+
+    container.appendChild(petal);
+
+    setTimeout(() => {
+      petal.remove();
+    }, 15000);
+  }, 500);
+}
+
+// Start petals once
+startPetals();
+  </script>
+</body>
+<div id="petals-container" class="fixed inset-0 pointer-events-none overflow-hidden z-0"></div>
+</html>
